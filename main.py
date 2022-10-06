@@ -1,19 +1,28 @@
 from bs4 import BeautifulSoup
 import requests
+import pandas
+import re
 
-html_requests = requests.get('https://store.steampowered.com/explore/new/').text
+#CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE
+workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
+df = pandas.DataFrame(workbook, columns=['Company website'])
+website_list = df['Company website'].tolist()
+
+#CURRENTLY ONLY LOOKING ONLY IN THE FIRST LINK 
+html_requests = requests.get(website_list[0]).text
 soup = BeautifulSoup(html_requests, 'lxml')
 
+string_occurence = 0
+all_results = soup.find(text=re.compile('we'))
+try:
+    for result in all_results:
+        string_occurence += 1
+except:
+    print("list is empty...")
 
-games = soup.find_all('a', class_ = 'tab_item')
-for game in games:
-    genre = game.find('div', class_ = 'tab_item_top_tags').text
-    name = game.find('div', class_ = 'tab_item_name').text
-    link = game.get('href')
-    print(f'''
-    Game Name: {name}
-    Game Genre: {genre}
-    Game Link: {link}
-    ''')
+print(string_occurence)
+
+
+
 
 
