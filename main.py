@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from bs4 import Comment
 import requests
 import pandas
 import re
@@ -12,15 +13,24 @@ website_list = df['Company website'].tolist()
 html_requests = requests.get(website_list[0]).text
 soup = BeautifulSoup(html_requests, 'lxml')
 
-string_occurence = 0
-all_results = soup.find(text=re.compile('we'))
-try:
-    for result in all_results:
-        string_occurence += 1
-except:
-    print("list is empty...")
+def tag_visible(element):
+    if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+        return False
+    if isinstance(element, Comment):
+        return False
+    return True
 
+def text_from_html(body):
+    soup = BeautifulSoup(body, 'html.parser')
+    texts = soup.findAll(text=True)
+    visible_texts = filter(tag_visible, texts)  
+    return u" ".join(t.strip() for t in visible_texts)
+
+all_html_text = text_from_html(html_requests)
+#all_results = all_html_text.find(text=re.compile('we'))
+string_occurence = all_html_text.count("We")
 print(string_occurence)
+
 
 
 
