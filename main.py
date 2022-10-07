@@ -4,12 +4,16 @@ import requests
 import pandas
 import re
 import time
-import multiprocessing
 
 #CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE
 workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
 df = pandas.DataFrame(workbook, columns=['Company website'])
 website_list = df['Company website'].tolist()
+broken_websites = ["http://www.intel.fr/", "http://wwwb.comcast.com/", "http://www.costco.com/", "http://www.catamaranrx.com/", 
+                    "http://www.biogenidec.com/", "http://www.analog.com/", "http://www.akamai.com/", "http://www.altera.com/",
+                    "http://www.lgi.com/", "http://www.linear.com/", "http://www.adobe.com/", "http://www.sigmaaldrich.com/"]
+for website in broken_websites:
+    website_list.remove(website)
 
 #return true or false if the element is visible or not
 def tag_visible(element):
@@ -28,10 +32,12 @@ def text_from_html(body):
 
 #get word to look for
 def mainLoop():
-    try:
-        userInput = input("What word do you want to look for?   ").lower()
-        start_time=time.time()
-        for website in website_list:
+    userInput = input("What word do you want to look for?   ").lower()
+    start_time=time.time()
+    for website in website_list:
+        print("\nWebsite number", website_list.index(website), "scraped: ", website)
+        try:
+            print("error: ", requests.get(website).raise_for_status())
             html_request = requests.get(website).text
 
             #get all text from wepage (and lowercase it)
@@ -40,12 +46,13 @@ def mainLoop():
             #find all occurences of word usign RE
             matches = re.findall(userInput, all_html_text)
 
-            print("\nWord occurences: ", len(matches),
-                "\nWebsite scraped: ", website)
+            print("Word occurences: ", len(matches))
             
-            print("\nTime elapsed:",round(time.time()-start_time,0),'secs',end='\n')
-    except Exception as e:
-        print("little error but should be fine :)\n")
+            print("Time elapsed:",round(time.time()-start_time,0),'secs',end='\n')
+        except Exception as e:
+            print("little error but should be fine :)\n")
+            print("Crashed because of website: ", website)
+        
 
 if __name__ == "__main__":
     print("-- STARTING THE PROGRAM --")
