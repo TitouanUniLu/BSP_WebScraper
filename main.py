@@ -3,10 +3,8 @@ from bs4 import Comment
 import requests
 import pandas
 import re
-#import spacy
-
-#machine learning library
-#nlp = spacy.load('en_core_web_lg')
+import time
+import multiprocessing
 
 #CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE
 workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
@@ -29,20 +27,26 @@ def text_from_html(body):
     return u" ".join(t.strip() for t in visible_texts)  #.strip() removes extra spaces
 
 #get word to look for
-userInput = input("What word do you want to look for?   ").lower()
-for website in website_list:
-    html_request = requests.get(website).text
+def mainLoop():
+    try:
+        userInput = input("What word do you want to look for?   ").lower()
+        start_time=time.time()
+        for website in website_list:
+            html_request = requests.get(website).text
 
-    #get all text from wepage (and lowercase it)
-    all_html_text = text_from_html(html_request).lower()
+            #get all text from wepage (and lowercase it)
+            all_html_text = text_from_html(html_request).lower()
 
-    #find all occurences of word usign RE
-    matches = re.findall(userInput, all_html_text)
+            #find all occurences of word usign RE
+            matches = re.findall(userInput, all_html_text)
 
-    print("\nWord occurences: ", len(matches),
-        "\nWebsite scraped: ", website)
+            print("\nWord occurences: ", len(matches),
+                "\nWebsite scraped: ", website)
+            
+            print("\nTime elapsed:",round(time.time()-start_time,0),'secs',end='\n')
+    except Exception as e:
+        print("little error but should be fine :)\n")
 
-
-
-
-
+if __name__ == "__main__":
+    print("-- STARTING THE PROGRAM --")
+    mainLoop()
