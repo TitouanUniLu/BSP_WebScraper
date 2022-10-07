@@ -13,9 +13,6 @@ workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
 df = pandas.DataFrame(workbook, columns=['Company website'])
 website_list = df['Company website'].tolist()
 
-#CURRENTLY ONLY LOOKING ONLY IN THE FIRST LINK 
-html_requests = requests.get(website_list[0]).text
-
 #return true or false if the element is visible or not
 def tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']: #invisible elements
@@ -33,15 +30,17 @@ def text_from_html(body):
 
 #get word to look for
 userInput = input("What word do you want to look for?   ").lower()
+for website in website_list:
+    html_request = requests.get(website).text
 
-#get all text from wepage (and lowercase it)
-all_html_text = text_from_html(html_requests).lower()
+    #get all text from wepage (and lowercase it)
+    all_html_text = text_from_html(html_request).lower()
 
-#find all occurences of word usign RE
-matches = re.findall(userInput, all_html_text)
+    #find all occurences of word usign RE
+    matches = re.findall(userInput, all_html_text)
 
-print("\nWord occurences: ", len(matches),
-      "\nWebsite scraped: ", website_list[0])
+    print("\nWord occurences: ", len(matches),
+        "\nWebsite scraped: ", website)
 
 
 
