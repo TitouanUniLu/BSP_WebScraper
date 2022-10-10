@@ -31,11 +31,11 @@ def text_from_html(body):
     return u" ".join(t.strip() for t in visible_texts)  #.strip() removes extra spaces
 
 #get word to look for
-def mainLoop():
+def mainLoop(list):
     userInput = input("What word do you want to look for?   ").lower()
     start_time=time.time()
-    for website in website_list:
-        print("\nWebsite number", website_list.index(website), "scraped: ", website)
+    for website in list:
+        print("\nWebsite number", list.index(website), "scraped: ", website)
         try:
             print("error: ", requests.get(website).raise_for_status())
             html_request = requests.get(website).text
@@ -48,12 +48,12 @@ def mainLoop():
 
             print("Word occurences: ", len(matches))
             
-            print("Time elapsed:",round(time.time()-start_time,0),'secs',end='\n')
         except Exception as e:
-            print("little error but should be fine :)\n")
-            print("Crashed because of website: ", website)
+            print("error: ", e) 
         
+        print("Time elapsed:",round(time.time()-start_time,0),'secs',end='\n')
+       
 
 if __name__ == "__main__":
     print("-- STARTING THE PROGRAM --")
-    mainLoop()
+    mainLoop(website_list)
