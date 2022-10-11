@@ -7,8 +7,20 @@ import time
 
 #CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE
 workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
-df = pandas.DataFrame(workbook, columns=['Company website'])
+df = pandas.DataFrame(workbook)
 website_list = df['Company website'].tolist()
+board_web_list = df['Website Board of Directors'].tolist()
+all_regular_expressions = df.columns[2:len(df.columns)-4].tolist()
+
+for i in range(0, len(all_regular_expressions)-1):
+    all_regular_expressions[i] = all_regular_expressions[i].replace("+OR+", "|")
+    all_regular_expressions[i] = all_regular_expressions[i].replace("+", " ") #is plus a space in the expression??
+    all_regular_expressions[i] = all_regular_expressions[i].replace("%22", "")
+    #until index 23 we don't have AND
+
+temp_regex = all_regular_expressions[0:23]
+
+#broken websites
 broken_websites = ["http://www.intel.fr/", "http://wwwb.comcast.com/", "http://www.costco.com/", "http://www.catamaranrx.com/", 
                     "http://www.biogenidec.com/", "http://www.analog.com/", "http://www.akamai.com/", "http://www.altera.com/",
                     "http://www.lgi.com/", "http://www.linear.com/", "http://www.adobe.com/", "http://www.sigmaaldrich.com/"]
@@ -32,10 +44,9 @@ def text_from_html(body):
 
 #get word to look for
 def mainLoop(list):
-    userInput = input("What word do you want to look for?   ").lower()
     start_time=time.time()
     for website in list:
-        print("\nWebsite number", list.index(website), "scraped: ", website)
+        print("\nWebsite number", list.index(website)+1, "scraped: ", website)
         try:
             print("error: ", requests.get(website).raise_for_status())
             html_request = requests.get(website).text
@@ -44,9 +55,9 @@ def mainLoop(list):
             all_html_text = text_from_html(html_request).lower()
 
             #find all occurences of word usign RE
-            matches = re.findall(userInput, all_html_text)
-
-            print("Word occurences: ", len(matches))
+            for regex in temp_regex:
+                matches = re.findall(re.compile(regex), all_html_text)
+                print(regex+":", len(matches))
             
         except Exception as e:
             print("error: ", e) 
