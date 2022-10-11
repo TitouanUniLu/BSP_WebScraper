@@ -44,7 +44,7 @@ def text_from_html(body):
     visible_texts = filter(tag_visible, texts) #second function call, to check if text is visible 
     return u" ".join(t.strip() for t in visible_texts)  #.strip() removes extra spaces
 
-file = open('results.csv', 'w')
+file = open('results.csv', 'w', newline='')
 writer = csv.writer(file)
 
 #get word to look for
@@ -55,9 +55,9 @@ def mainLoop(list, regex_list, file):
     writer.writerow(header)
     for website in list:
         print("\nWebsite number", list.index(website)+1, "scraped: ", website)
+        data = []
+        data.append(website)
         try:
-            data = []
-            data.append(website)
             error_msg = "error: " + str(requests.get(website).raise_for_status())
             print(error_msg)
             html_request = requests.get(website).text
@@ -76,6 +76,9 @@ def mainLoop(list, regex_list, file):
             
         except Exception as e:
             print("error: ", e) 
+            for i in range(0, len(header)-1):
+                data.append("error")
+            writer.writerow(data)
         
         print("Time elapsed:",round(time.time()-start_time,0),'secs',end='\n')
        
