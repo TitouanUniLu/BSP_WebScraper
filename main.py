@@ -15,6 +15,12 @@ broken_websites = ["http://www.intel.fr/", "http://wwwb.comcast.com/", "http://w
 for website in broken_websites:
     website_list.remove(website)
 
+'''new ^( product _ service _ pro-
+355 cess _ application _ solution _ feature _ release _ version _ launch
+
+356 _ introduction _ introduce _ ‘‘new product’’ _ ‘‘new service’’ _
+357 ‘‘new process’’).'''
+
 #return true or false if the element is visible or not
 def tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']: #invisible elements
