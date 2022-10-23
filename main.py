@@ -54,11 +54,12 @@ def text_from_html(body):
 
 def get_sub_links(html_request, website):
     soup = BeautifulSoup(html_request, 'lxml')
+    website = re.findall('//(.*)/', website)[0]
     all_sub_links = []
     for link in soup.find_all('a', attrs={'href': re.compile("^https://")}):
-        #link = str(link)
-        #if website in link:
-        all_sub_links.append(link.get('href'))
+        link = link.get('href')
+        if website in link:
+            all_sub_links.append(link)
     return all_sub_links
 
 
@@ -85,8 +86,8 @@ def mainLoop(list, regex_list, file):
 
             #find all sub links hidden or visible in the website
             website_sub_links = get_sub_links(html_request, website)
-            for link in website_sub_links:
-                print(link)
+            #for link in website_sub_links:
+            #    print(link)
             #time.sleep(5)
 
 
