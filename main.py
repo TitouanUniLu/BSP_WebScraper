@@ -72,38 +72,27 @@ def get_sub_links(html_request, website):
 
 
 def occurencePerWebsite(website, regex_list, writer, header):
-    print("\nWebsite scraped: ", website)
     data = []
     data.append(website)
-    website_domain = re.findall('//(.*)/', website)[0]
+    results = 0
     try:
-        error_msg = "error: " + str(requests.get(website).raise_for_status())
-        print(error_msg)
         html_request = requests.get(website).text
 
         #get all text from wepage (and lowercase it)
         all_html_text = text_from_html(html_request).lower()
 
-        #find all sub links hidden or visible in the website
-        website_sub_links = get_sub_links(html_request, website_domain)
-        #time.sleep(5)
-
-
         #find all occurences of word usign RE
-        for regex in regex_list:
-            matches = re.findall(re.compile(regex), all_html_text)
+        for i in range(0,len(regex_list)):
+            matches = re.findall(re.compile(regex_list[i]), all_html_text)
             #print(regex, len(matches))         #debug line
             data.append(len(matches))
         writer.writerow(data)
-            
-            
+                  
     except Exception as e:
         print("error: ", e) 
         for i in range(0, len(header)-1):
             data.append("error")
         writer.writerow(data)
-
-# get word to look for
 
 
 def mainLoop(list, regex_list, file):
@@ -116,7 +105,30 @@ def mainLoop(list, regex_list, file):
 
     start_time = time.time()
     for website in list:
-        occurencePerWebsite(website, regex_list, writer, header)
+        print("\nWebsite scraped: ", website)
+        data = []
+        website_domain = re.findall('//(.*)/', website)[0]
+
+        try:
+            error_msg = "error: " + str(requests.get(website).raise_for_status())
+            print(error_msg)
+            html_request = requests.get(website).text
+
+            #find all sub links hidden or visible in the website
+            all_websites = get_sub_links(html_request, website_domain)
+            all_websites.append(website)
+
+            for sub_website in all_websites:
+                data.append(sub_website)
+                print(sub_website)
+                occurencePerWebsite(sub_website, regex_list, writer, header)
+        
+        except Exception as e:
+            print("error: ", e) 
+            for i in range(0, len(header)-1):
+                data.append("error")
+            writer.writerow(data)
+
 
         print("Time elapsed:", round(time.time()-start_time, 0), 'secs', end='\n')
         # os.system('cls')
