@@ -61,19 +61,20 @@ def text_from_html(body):
     return u" ".join(t.strip() for t in visible_texts)
 
 
+#returns all links from the main website scraped with the same domain (no duplicates)
 def get_sub_links(html_request, website):
     soup = BeautifulSoup(html_request, 'lxml')
     all_sub_links = []
     for link in soup.find_all('a', attrs={'href': re.compile("^https://")}):
         link = link.get('href')
-        if website in link:
+        if website in link and link not in all_sub_links and not link.endswith('.pdf'):
+            print(link)
             all_sub_links.append(link)
     return all_sub_links
 
 
 def occurencePerWebsite(website, regex_list, writer, header):
-    data = []
-    data.append(website)
+    data = [website]
     results = 0
     try:
         html_request = requests.get(website).text
@@ -116,11 +117,11 @@ def mainLoop(list, regex_list, file):
 
             #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
-            all_websites.append(website)
 
+            print("The amount of sub-websites that will be scraped is: ", len(all_websites))
             for sub_website in all_websites:
-                data.append(sub_website)
-                print(sub_website)
+                #data.append(sub_website)
+                #print(sub_website)
                 occurencePerWebsite(sub_website, regex_list, writer, header)
         
         except Exception as e:
