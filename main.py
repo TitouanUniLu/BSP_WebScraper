@@ -68,14 +68,13 @@ def get_sub_links(html_request, website):
     for link in soup.find_all('a', attrs={'href': re.compile("^https://")}):
         link = link.get('href')
         if website in link and link not in all_sub_links and not link.endswith('.pdf'):
-            print(link)
+            #print(link)
             all_sub_links.append(link)
     return all_sub_links
 
 
-def occurencePerWebsite(website, regex_list, writer, header):
-    data = [website]
-    results = 0
+def occurencePerWebsite(website, regex_list, header):
+    data = []
     try:
         html_request = requests.get(website).text
 
@@ -87,19 +86,25 @@ def occurencePerWebsite(website, regex_list, writer, header):
             matches = re.findall(re.compile(regex_list[i]), all_html_text)
             #print(regex, len(matches))         #debug line
             data.append(len(matches))
-        writer.writerow(data)
+        return data
+        #writer.writerow(data)
                   
     except Exception as e:
         print("error: ", e) 
         for i in range(0, len(header)-1):
-            data.append("error")
-        writer.writerow(data)
+            data.append(0)
+        return data
+        #writer.writerow(data)
 
+def sumResults(fullData, subData):
+    for i in range(0, len(fullData)):
+        fullData[i] += subData[i]
+    return fullData
 
 def mainLoop(list, regex_list, file):
     writer = csv.writer(file)
 
-    header = ["Website Name"]
+    header = ["Website Name", "Amount of Sub-Websites"]
     for elem in regex_list:
         header.append(elem)
     writer.writerow(header)
@@ -107,7 +112,8 @@ def mainLoop(list, regex_list, file):
     start_time = time.time()
     for website in list:
         print("\nWebsite scraped: ", website)
-        data = []
+        data = [0] * len(regex_list)
+        print(data)
         website_domain = re.findall('//(.*)/', website)[0]
 
         try:
@@ -118,11 +124,16 @@ def mainLoop(list, regex_list, file):
             #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
 
-            print("The amount of sub-websites that will be scraped is: ", len(all_websites))
+            #print("The amount of sub-websites that will be scraped is: ", len(all_websites))
             for sub_website in all_websites:
                 #data.append(sub_website)
-                #print(sub_website)
-                occurencePerWebsite(sub_website, regex_list, writer, header)
+                print(sub_website)
+                tempData = occurencePerWebsite(sub_website, regex_list, header)
+                data = sumResults(data, tempData)
+                #print(data)
+            data = [website] + [len(all_websites)] + data
+            print(data)
+            writer.writerow(data)
         
         except Exception as e:
             print("error: ", e) 
