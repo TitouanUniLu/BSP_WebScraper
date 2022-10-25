@@ -55,18 +55,21 @@ def text_from_html(body):
 def get_sub_links(html_request, website):
     soup = BeautifulSoup(html_request, 'lxml')
     all_sub_links = []
+    CAP = 10    #variable to avoid having too many website, change value if needed
+    
     for link in soup.find_all('a', attrs={'href': re.compile("^https://")}):
         link = link.get('href')
         if website in link and link not in all_sub_links and not link.endswith('.pdf'):
             #print(link)
             all_sub_links.append(link)
-    return all_sub_links
+    return all_sub_links[0:CAP]
 
 ''' GET AMOUNT OF KEYWORDS PER RE FOR A WEBSITE'''
 def occurencePerWebsite(website, regex_list, header):
     data = []
     try:
         html_request = requests.get(website).text
+        print("error: " + str(requests.get(website).raise_for_status()))
 
         #get all text from wepage (and lowercase it)
         all_html_text = text_from_html(html_request).lower()
@@ -80,10 +83,11 @@ def occurencePerWebsite(website, regex_list, header):
         #writer.writerow(data)
                   
     except Exception as e:
-        print("error: ", e) 
+        """print("error: ", e) 
         for i in range(0, len(header)-1):
-            data.append(0)
-        return data
+            data.append("error")
+        return data"""
+        print(e)
         #writer.writerow(data)
 
 ''' ADD THE SUB WEBSITE RESULTS TO MAIN WEBSITE RESULTS'''
@@ -110,14 +114,15 @@ def mainLoop(list, regex_list, file):
         website_domain = re.findall('//(.*)/', website)[0]
 
         try:
-            error_msg = "error: " + str(requests.get(website).raise_for_status())
-            print(error_msg)
+            print("error: " + str(requests.get(website).raise_for_status()))
+            
             html_request = requests.get(website).text
 
             #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
 
             #print("The amount of sub-websites that will be scraped is: ", len(all_websites))
+            print("amount of websites that will be scraped:  ", len(all_websites))
             for sub_website in all_websites:
                 #data.append(sub_website)
                 print(sub_website)
@@ -132,6 +137,7 @@ def mainLoop(list, regex_list, file):
             print("error: ", e) 
             for i in range(0, len(header)-1):
                 data.append("error")
+            data = [website] + [len(all_websites)] + data
             writer.writerow(data)
 
 
