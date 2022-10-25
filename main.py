@@ -5,17 +5,15 @@ import pandas
 import re
 import time
 import csv
-import os
-import urllib.request
 
-# CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE
+''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
 workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
 df = pandas.DataFrame(workbook)
 website_list = df['Company website'].tolist()
 board_web_list = df['Website Board of Directors'].tolist()
 all_regular_expressions = df.columns[2:len(df.columns)-4].tolist()
 
-
+''' clear the regex given to something python can read'''
 for i in range(0, len(all_regular_expressions)-1):
     all_regular_expressions[i] = all_regular_expressions[i].replace("OR", "|")
     all_regular_expressions[i] = all_regular_expressions[i].replace(
@@ -23,6 +21,7 @@ for i in range(0, len(all_regular_expressions)-1):
     all_regular_expressions[i] = all_regular_expressions[i].replace("%22", "")
     # until index 23 we don't have AND
 
+''' use only temporarly until AND operator is fixed'''
 temp_regex = all_regular_expressions[0:23]
 
 # broken websites
@@ -32,15 +31,8 @@ broken_websites = ["http://www.intel.fr/", "http://wwwb.comcast.com/", "http://w
 for website in broken_websites:
     website_list.remove(website)
 
-'''new ^( product _ service _ pro-
-355 cess _ application _ solution _ feature _ release _ version _ launch
 
-356 _ introduction _ introduce _ ‘‘new product’’ _ ‘‘new service’’ _
-357 ‘‘new process’’).'''
-
-# return true or false if the element is visible or not
-
-
+''' return all the content we need by looking at the tags in the html body '''
 def tag_visible(element):
     # invisible elements
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
@@ -49,9 +41,7 @@ def tag_visible(element):
         return False
     return True
 
-# return all the text of the html body
-
-
+''' get all text in html body of a website'''
 def text_from_html(body):
     soup = BeautifulSoup(body, 'lxml')
     texts = soup.findAll(text=True)
@@ -61,7 +51,7 @@ def text_from_html(body):
     return u" ".join(t.strip() for t in visible_texts)
 
 
-#returns all links from the main website scraped with the same domain (no duplicates)
+''' returns all links from the main website scraped with the same domain (no duplicates) '''
 def get_sub_links(html_request, website):
     soup = BeautifulSoup(html_request, 'lxml')
     all_sub_links = []
@@ -72,7 +62,7 @@ def get_sub_links(html_request, website):
             all_sub_links.append(link)
     return all_sub_links
 
-
+''' GET AMOUNT OF KEYWORDS PER RE FOR A WEBSITE'''
 def occurencePerWebsite(website, regex_list, header):
     data = []
     try:
@@ -96,11 +86,14 @@ def occurencePerWebsite(website, regex_list, header):
         return data
         #writer.writerow(data)
 
+''' ADD THE SUB WEBSITE RESULTS TO MAIN WEBSITE RESULTS'''
 def sumResults(fullData, subData):
     for i in range(0, len(fullData)):
         fullData[i] += subData[i]
     return fullData
 
+
+''' MAIN LOOP TO RUN TO OBTAIN RESULTS '''
 def mainLoop(list, regex_list, file):
     writer = csv.writer(file)
 
@@ -145,7 +138,7 @@ def mainLoop(list, regex_list, file):
         print("Time elapsed:", round(time.time()-start_time, 0), 'secs', end='\n')
         # os.system('cls')
 
-
+''' MAIN '''
 if __name__ == "__main__":
     print("-- STARTING THE PROGRAM --")
     file = open('results.csv', 'w', newline='')
