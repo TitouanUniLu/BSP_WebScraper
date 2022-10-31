@@ -6,7 +6,6 @@ import pandas
 import re
 import time
 import csv
-import multiprocessing
 
 ''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
 workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
@@ -21,6 +20,7 @@ for i in range(0, len(all_regular_expressions)-1):
     all_regular_expressions[i] = all_regular_expressions[i].replace("+", " ")  # is plus a space in the expression??
     all_regular_expressions[i] = all_regular_expressions[i].replace("AND", "+")
     all_regular_expressions[i] = all_regular_expressions[i].replace("%22", "")
+    all_regular_expressions[i] = all_regular_expressions[i].replace(" ", "")
     #print(all_regular_expressions[i], bool(re.compile(all_regular_expressions[i])))
     # until index 23 we don't have AND
 
@@ -63,7 +63,7 @@ def text_from_html(body):
 def get_sub_links(html_request, website):
     soup = BeautifulSoup(html_request, 'lxml')
     all_sub_links = []
-    CAP = 20    #variable to avoid having too many website, change value if needed
+    CAP = 100000    #variable to avoid having too many website, change value if needed
     
     for link in soup.find_all('a', attrs={'href': re.compile("^https://")}):
         link = link.get('href')
@@ -76,9 +76,9 @@ def get_sub_links(html_request, website):
 def occurencePerWebsite(website, regex_list):
     data = []
     try:
-        print("\nWebsite scraped: ", website)
+        #print("\nWebsite scraped: ", website)
         html_request = requests.get(website, headers=headers, timeout=10).text
-        print("error: " + str(requests.get(website, headers=headers, timeout=10).raise_for_status()))
+        #print("error: " + str(requests.get(website, headers=headers, timeout=10).raise_for_status()))
 
         #get all text from wepage (and lowercase it)
         all_html_text = text_from_html(html_request).lower()
@@ -130,6 +130,7 @@ def mainLoop(list, regex_list, file):
 
             #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
+            print(len(all_websites))
 
             '''for elem in black_list: 
                 if elem in all_websites: all_websites.remove(elem)'''
