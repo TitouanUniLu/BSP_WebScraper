@@ -32,10 +32,12 @@ temp_regex = all_regular_expressions
 broken_websites = ["http://www.intel.fr/", "http://wwwb.comcast.com/", "http://www.costco.com/", "http://www.catamaranrx.com/",
                    "http://www.biogenidec.com/", "http://www.analog.com/", "http://www.akamai.com/", "http://www.altera.com/",
                    "http://www.lgi.com/", "http://www.linear.com/", "http://www.adobe.com/", "http://www.sigmaaldrich.com/"]
-for website in broken_websites:
+'''for website in broken_websites:
     website_list.remove(website)
-
-
+'''
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
+}
 
 
 ''' return all the content we need by looking at the tags in the html body '''
@@ -61,7 +63,7 @@ def text_from_html(body):
 def get_sub_links(html_request, website):
     soup = BeautifulSoup(html_request, 'lxml')
     all_sub_links = []
-    CAP = 15    #variable to avoid having too many website, change value if needed
+    CAP = 20    #variable to avoid having too many website, change value if needed
     
     for link in soup.find_all('a', attrs={'href': re.compile("^https://")}):
         link = link.get('href')
@@ -74,8 +76,9 @@ def get_sub_links(html_request, website):
 def occurencePerWebsite(website, regex_list):
     data = []
     try:
-        html_request = requests.get(website).text
-        print("\nWebsite scraped: ", website, "| error: " + str(requests.get(website).raise_for_status()))
+        print("\nWebsite scraped: ", website)
+        html_request = requests.get(website, headers=headers, timeout=10).text
+        print("error: " + str(requests.get(website, headers=headers, timeout=10).raise_for_status()))
 
         #get all text from wepage (and lowercase it)
         all_html_text = text_from_html(html_request).lower()
@@ -101,6 +104,10 @@ def sumResults(fullData, subData):
 def mainLoop(list, regex_list, file):
     writer = csv.writer(file)
 
+    #black_list = ['https://www.ebay.com/feed', 'https://www.ebay.com/myb/SavedSellers', 'https://www.ebay.com/myb/SavedSearches',
+    #'https://www.microchip.com/en-us/products/embedded-controllers-and-super-io']
+
+
     header = ["Website Name", "Amount of Sub-Websites"]
     for elem in regex_list:
         header.append(elem)
@@ -118,11 +125,14 @@ def mainLoop(list, regex_list, file):
         try:
             #print("error: " + str(requests.get(website).raise_for_status()))
             
-            html_request = requests.get(website).text
+            html_request = requests.get(website, headers=headers, timeout=10).text
             print('test')
 
             #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
+
+            '''for elem in black_list: 
+                if elem in all_websites: all_websites.remove(elem)'''
 
             #print("The amount of sub-websites that will be scraped is: ", len(all_websites))
             print("amount of websites that will be scraped in same domain:  ", len(all_websites))
@@ -141,7 +151,7 @@ def mainLoop(list, regex_list, file):
             '''for i in range(0, len(header)-1):
                 data.append("error")'''
             data = [website] + [len(all_websites)] + data
-            data.append("error")
+            #data.append("error")
             writer.writerow(data)
 
 
