@@ -20,7 +20,7 @@ for i in range(0, len(all_regular_expressions)-1):
     all_regular_expressions[i] = all_regular_expressions[i].replace("+", " ")  # is plus a space in the expression??
     all_regular_expressions[i] = all_regular_expressions[i].replace("AND", "+")
     all_regular_expressions[i] = all_regular_expressions[i].replace("%22", "")
-    all_regular_expressions[i] = all_regular_expressions[i].replace(" ", "")
+    #all_regular_expressions[i] = all_regular_expressions[i].replace(" ", "")
     #print(all_regular_expressions[i], bool(re.compile(all_regular_expressions[i])))
     # until index 23 we don't have AND
 
