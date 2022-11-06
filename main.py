@@ -1,4 +1,3 @@
-from audioop import mul
 from bs4 import BeautifulSoup
 from bs4 import Comment
 import requests
@@ -6,6 +5,15 @@ import pandas
 import re
 import time
 import csv
+import nltk
+from nltk import ne_chunk, pos_tag, word_tokenize
+from nltk.tree import Tree
+
+''' downloading the required NLTK dependencies '''
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
 
 ''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
 workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
@@ -87,6 +95,7 @@ def occurencePerWebsite(website, regex_list):
         for i in range(0,len(regex_list)):
             matches = re.findall(re.compile(regex_list[i]), all_html_text)
             #print(regex, len(matches))         #debug line
+            #for elem in matches: print(elem)
             data.append(len(matches))
         return data
                   
@@ -126,7 +135,6 @@ def mainLoop(list, regex_list, file):
             #print("error: " + str(requests.get(website).raise_for_status()))
             
             html_request = requests.get(website, headers=headers, timeout=10).text
-            print('test')
 
             #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
@@ -159,10 +167,52 @@ def mainLoop(list, regex_list, file):
         print("Time elapsed:", round(time.time()-start_time, 0), 'secs \n \n')
         # os.system('cls')
 
+def getDirectorsNames(website_list):
+    for website in website_list:
+        all_names = []
+        try:
+            html_request = requests.get(website, headers=headers, timeout=5).text
+            text = text_from_html(html_request)
+            #print(text)
+            #time.sleep(50)
+
+            '''nltk_results = ne_chunk(pos_tag(word_tokenize(text)))
+            for nltk_result in nltk_results:
+                if type(nltk_result) == Tree and nltk_result.label() == 'PERSON':
+                    name = ''
+                    for nltk_result_leaf in nltk_result.leaves():
+                        name += nltk_result_leaf[0] + ' '
+                        print ('Type: ', nltk_result.label(), 'Name: ', name) 
+                    if name not in all_names: all_names.append(name)
+            print(website, all_names)'''
+            tokens = nltk.tokenize.word_tokenize(text)
+            pos = nltk.pos_tag(tokens)
+            sentt = nltk.ne_chunk(pos, binary = False)
+            person_list = []
+            person = []
+            name = ""
+            for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
+                for leaf in subtree.leaves():
+                    person.append(leaf[0])
+                if len(person) > 1: #avoid grabbing lone surnames
+                    for part in person:
+                        name += part + ' '
+                    if name[:-1] not in person_list:
+                        person_list.append(name[:-1])
+                    name = ''
+                person = []
+            print(website, person_list, '\n\n')
+        except Exception as e:
+            print(e)
+
+    return True
+
 ''' MAIN '''
 if __name__ == "__main__":
-    print("-- STARTING THE PROGRAM --")
+    print("\n-- STARTING THE PROGRAM --")
     file = open('results.csv', 'w', newline='')
+    print(getDirectorsNames(board_web_list))
+    time.sleep(20)
     mainLoop(website_list, temp_regex, file)
 
     
