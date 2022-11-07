@@ -1,0 +1,5 @@
+try: change vns
+finish raising accuracy then get the results manually
+
+for regex:
+convert manually :(

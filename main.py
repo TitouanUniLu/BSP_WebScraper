@@ -8,6 +8,7 @@ import csv
 import nltk
 from nltk import ne_chunk, pos_tag, word_tokenize
 from nltk.tree import Tree
+from names_dataset import NameDataset, NameWrapper
 
 ''' downloading the required NLTK dependencies '''
 nltk.download('punkt')
@@ -111,7 +112,6 @@ def sumResults(fullData, subData):
 
 ''' MAIN LOOP TO RUN TO OBTAIN RESULTS '''
 def mainLoop(list, regex_list, file):
-    writer = csv.writer(file)
 
     #black_list = ['https://www.ebay.com/feed', 'https://www.ebay.com/myb/SavedSellers', 'https://www.ebay.com/myb/SavedSearches',
     #'https://www.microchip.com/en-us/products/embedded-controllers-and-super-io']
@@ -168,8 +168,8 @@ def mainLoop(list, regex_list, file):
         # os.system('cls')
 
 def getDirectorsNames(website_list):
+    nd = NameDataset()
     for website in website_list:
-        all_names = []
         try:
             html_request = requests.get(website, headers=headers, timeout=5).text
             text = text_from_html(html_request)
@@ -201,9 +201,30 @@ def getDirectorsNames(website_list):
                         person_list.append(name[:-1])
                     name = ''
                 person = []
-            print(website, person_list, '\n\n')
+            #print(website, person_list, '\n\n')
+            final_names = []
+            for name in person_list:
+                try:
+                    name = name.split()
+                    first = (NameWrapper(nd.search(name[0])).describe)
+                    #last = (NameWrapper(nd.search(name[1])).describe, '\n')
+                    if first.split(',')[0] == 'Male' or first.split(',')[0] == 'Female':
+                        #print(name)
+                        #print(first, last, '\n')
+                        newname = name[0] + ' ' + name[1]
+                        if newname not in final_names: final_names.append(newname)
+                        #time.sleep(2)
+                    if name[0].lower() == 'ms.' or name[0].lower() == 'mr.':
+                        newname = name[0] + ' ' + name[1]
+                        if newname not in final_names: final_names.append(newname)
+
+                except Exception as e:
+                    continue
+            #print(website, final_names, '\n')
+            data = [website] + final_names
+            writer.writerow(data)
         except Exception as e:
-            print(e)
+            print(website, " access error")
 
     return True
 
@@ -211,8 +232,9 @@ def getDirectorsNames(website_list):
 if __name__ == "__main__":
     print("\n-- STARTING THE PROGRAM --")
     file = open('results.csv', 'w', newline='')
-    print(getDirectorsNames(board_web_list))
-    time.sleep(20)
+    writer = csv.writer(file)
+    getDirectorsNames(board_web_list)
     mainLoop(website_list, temp_regex, file)
+    
 
     
