@@ -9,6 +9,7 @@ import nltk
 from nltk import ne_chunk, pos_tag, word_tokenize
 from nltk.tree import Tree
 from names_dataset import NameDataset, NameWrapper
+import gender_guesser.detector as gender
 
 ''' downloading the required NLTK dependencies '''
 nltk.download('punkt')
@@ -167,24 +168,30 @@ def mainLoop(list, regex_list, file):
         print("Time elapsed:", round(time.time()-start_time, 0), 'secs \n \n')
         # os.system('cls')
 
+def directorGender(list):
+    d = gender.Detector()
+    checked_directors = []
+    gender_count = [0, 0, 0] # male - female -androgynous
+    for dir in list:
+        first_name = dir.split()[0]
+        if d.get_gender(first_name) in ['andy', 'male', 'female', 'mostly_male', 'mostly_female']:
+            checked_directors.append(dir)
+            if d.get_gender(first_name) == 'andy':
+                gender_count[2] += 1
+            if d.get_gender(first_name) in ['male', 'mostly_male']:
+                gender_count[0] += 1
+            if d.get_gender(first_name) in ['female', 'mostly_female']:
+                gender_count[1] += 1
+            #print(d.get_gender(first_name))
+    return checked_directors, gender_count
+
+
 def getDirectorsNames(website_list):
     nd = NameDataset()
     for website in website_list:
         try:
             html_request = requests.get(website, headers=headers, timeout=5).text
             text = text_from_html(html_request)
-            #print(text)
-            #time.sleep(50)
-
-            '''nltk_results = ne_chunk(pos_tag(word_tokenize(text)))
-            for nltk_result in nltk_results:
-                if type(nltk_result) == Tree and nltk_result.label() == 'PERSON':
-                    name = ''
-                    for nltk_result_leaf in nltk_result.leaves():
-                        name += nltk_result_leaf[0] + ' '
-                        print ('Type: ', nltk_result.label(), 'Name: ', name) 
-                    if name not in all_names: all_names.append(name)
-            print(website, all_names)'''
             tokens = nltk.tokenize.word_tokenize(text)
             pos = nltk.pos_tag(tokens)
             sentt = nltk.ne_chunk(pos, binary = False)
@@ -203,7 +210,7 @@ def getDirectorsNames(website_list):
                 person = []
             #print(website, person_list, '\n\n')
             final_names = []
-            for name in person_list:
+            '''for name in person_list:
                 try:
                     name = name.split()
                     first = (NameWrapper(nd.search(name[0])).describe)
@@ -214,19 +221,41 @@ def getDirectorsNames(website_list):
                         newname = name[0] + ' ' + name[1]
                         if newname not in final_names: final_names.append(newname)
                         #time.sleep(2)
-                    if name[0].lower() == 'ms.' or name[0].lower() == 'mr.':
+                    elif name[0].lower() == 'ms.' or name[0].lower() == 'mr.':
                         newname = name[0] + ' ' + name[1]
-                        if newname not in final_names: final_names.append(newname)
+                        if newname not in final_names: final_names.append(newname) '''
+
+                    #new method
+            for fullname in person_list:
+                try:
+                    name = fullname.split()
+                    first = (NameWrapper(nd.search(name[0])).describe)
+                    #last = (NameWrapper(nd.search(name[1])).describe, '\n')
+                    if first.split(',')[0] == 'Male' or first.split(',')[0] == 'Female':
+                        #print(name)
+                        #print(first, last, '\n')
+                        #newname = name[0] + ' ' + name[1]
+                        if fullname not in final_names: final_names.append(fullname)
+                        #time.sleep(2)
+                    elif name[0].lower() == 'ms.' or name[0].lower() == 'mr.':
+                        #fullname = name[0] + ' ' + name[1]
+                        if fullname not in final_names: final_names.append(fullname) 
+                               
 
                 except Exception as e:
                     continue
-            #print(website, final_names, '\n')
-            data = [website] + final_names
+            final_names, gender_stats = directorGender(final_names)
+            data = [website] + final_names + gender_stats
+            print(website, final_names, '\n')
             writer.writerow(data)
         except Exception as e:
-            print(website, " access error")
-
+            print(website, " access error\n")
+            data = [website, 'error']
+            writer.writerow(data)
     return True
+
+
+
 
 ''' MAIN '''
 if __name__ == "__main__":
