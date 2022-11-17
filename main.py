@@ -34,9 +34,30 @@ for i in range(0, len(all_regular_expressions)-1):
     #print(all_regular_expressions[i], bool(re.compile(all_regular_expressions[i])))
     # until index 23 we don't have AND
 
+''' second part of RE'''
+second_regex = [
+    'new product | new service | new process | new application | new solution | new feature | new release | new version | new launch | new introduction | new introduce | new new-product | new new-service | new new-process | new new-solution | new product-lauch',
+    'Gender equality | Gender promoting balance inclusion | equality plans | equality measures | promoting equality | in equality | inclusive | equal opportunities | ensure women participation | equal opportunities for leadership | fostering equality | equal inclusion | equality between men and women | balanced and inclusive working environment',
+    'Gender formal equality policies | Gender balance is adequately promoted | Gender legislation and strategic plans on equality | Gender legislation and recommendations on equality | Gender anti discrimination strategy | Gender mainstreaming strategy | Gender institutional change projects | Gender equality measures | Gender equality training',
+    'Gender related strength and weakness | Gender differences between men and women | Gender does not take into account differences | Gender diversity perspective',
+    'Gender representation of women and men | Gender institutional change | Gender mainstream | Gender mainstreaming platform',
+    'Gender reshape the field | Gender promoting | Gender awareness-raising | Gender promote institutional change | Gender sensitive institutional transformation',
+    'Gender innovation | Gender participation of women | Gender increasing female expertise in the field | Gender sensitive research innovation | Gender diverse',
+    'Gender Participatory Audit | Gender Audit Facilitators | Gender impact assessment | Gender disaggregated statistics | Gender sensitive indicators | Gender gendering the content and methods of research | Gender sex-disaggregated data production | Gender evaluation',
+    'Gender committees | Gender advisor | Gender advice equality | Gender experstise | Gender sensitive parliament',
+    'Gender public allocations | Gender budgeting',
+    'Gender gap | Gender wage gap',
+    'Gender balance report | Gender composition | Gender share of female | Gander proportion of women | Gender parity indices | Gender balance monitoring | Gender underrepresentation of women | Gender monitoring instruments | Gender under-represented sex | Gender monitoring | Gender indicators | Gender ratios',
+    'Women empowerment of all girls | Women needs and the perspective',
+    'Gender related disputes | Gender based discriminations | Gender negative stereotypes | Gender disparities | Gender stereotypes | Gender issues | Gender implications | gender stereotypical roles | Gender equality related issues | Gender bias | Gender unconscious bias | Gender science stereotypes | Gender blind | Gender gender-based offenses | Gender segregated | Gender based mobbing and harassment | Gender sexist attitudes and bahaviours',
+    'Gender inclusive language | Gender grammatical | Gender inclusive communication | Gender biased expressions | Gender neutral words | Gender biased language | Gender traditional form of nouns | Gender neutral alternative for nouns | Gender non-discriminatory language | Gender feminine and masculine pronouns | Gender non-Sexist Language | Gender Sexist language',
+    'Gender sensitive | Gender friendly | Gender relevant',
+    'Gender research and curricula | Gender studies'
+    ]
+
 ''' use only temporarly until AND operator is fixed'''
-#temp_regex = all_regular_expressions[0:24]
-temp_regex = all_regular_expressions
+temp_regex = all_regular_expressions[0:23] 
+main_regex = temp_regex + second_regex
 
 # broken websites
 broken_websites = ["http://www.intel.fr/", "http://wwwb.comcast.com/", "http://www.costco.com/", "http://www.catamaranrx.com/",
@@ -120,7 +141,7 @@ def mainLoop(list, regex_list, file):
 
     header = ["Website Name", "Amount of Sub-Websites"]
     for elem in regex_list:
-        header.append(elem)
+        header.append(elem.lower())
     writer.writerow(header)
 
     start_time = time.time()
@@ -172,9 +193,11 @@ def directorGender(list):
     d = gender.Detector()
     checked_directors = []
     gender_count = [0, 0, 0] # male - female -androgynous
+    possible_outcomes = ['andy', 'male', 'female', 'mostly_male', 'mostly_female']
     for dir in list:
         first_name = dir.split()[0]
-        if d.get_gender(first_name) in ['andy', 'male', 'female', 'mostly_male', 'mostly_female']:
+        last_name = dir.split()[1]
+        if d.get_gender(first_name) in possible_outcomes: # and d.get_gender(last_name) in possible_outcomes:
             checked_directors.append(dir)
             if d.get_gender(first_name) == 'andy':
                 gender_count[2] += 1
@@ -187,6 +210,7 @@ def directorGender(list):
 
 
 def getDirectorsNames(website_list):
+    writer.writerow(['website address', 'male', 'female', 'androgynous'])
     nd = NameDataset()
     for website in website_list:
         try:
@@ -245,7 +269,7 @@ def getDirectorsNames(website_list):
                 except Exception as e:
                     continue
             final_names, gender_stats = directorGender(final_names)
-            data = [website] + final_names + gender_stats
+            data = [website] + gender_stats #add final_names here to see directors names
             print(website, final_names, '\n')
             writer.writerow(data)
         except Exception as e:
@@ -260,10 +284,12 @@ def getDirectorsNames(website_list):
 ''' MAIN '''
 if __name__ == "__main__":
     print("\n-- STARTING THE PROGRAM --")
+    '''file = open('board_of_directors.csv', 'w', newline='')
+    writer = csv.writer(file)
+    getDirectorsNames(board_web_list)'''
     file = open('results.csv', 'w', newline='')
     writer = csv.writer(file)
-    getDirectorsNames(board_web_list)
-    mainLoop(website_list, temp_regex, file)
+    mainLoop(website_list, main_regex, file)
     
 
     
