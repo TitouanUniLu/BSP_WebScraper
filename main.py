@@ -10,66 +10,7 @@ from nltk import ne_chunk, pos_tag, word_tokenize
 from nltk.tree import Tree
 from names_dataset import NameDataset, NameWrapper
 import gender_guesser.detector as gender
-
-''' downloading the required NLTK dependencies '''
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('maxent_ne_chunker')
-nltk.download('words')
-
-''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
-workbook = pandas.read_excel('ALL_INDICES-2021.xlsx')
-df = pandas.DataFrame(workbook)
-website_list = df['Company website'].tolist()
-board_web_list = df['Website Board of Directors'].tolist()
-all_regular_expressions = df.columns[2:len(df.columns)-4].tolist()
-
-''' clear the regex given to something python can read'''
-for i in range(0, len(all_regular_expressions)-1):
-    all_regular_expressions[i] = all_regular_expressions[i].replace("OR", "|")
-    all_regular_expressions[i] = all_regular_expressions[i].replace("+", " ")  # is plus a space in the expression??
-    all_regular_expressions[i] = all_regular_expressions[i].replace("AND", "+")
-    all_regular_expressions[i] = all_regular_expressions[i].replace("%22", "")
-    #all_regular_expressions[i] = all_regular_expressions[i].replace(" ", "")
-    #print(all_regular_expressions[i], bool(re.compile(all_regular_expressions[i])))
-    # until index 23 we don't have AND
-
-''' second part of RE'''
-second_regex = [
-    'new product | new service | new process | new application | new solution | new feature | new release | new version | new launch | new introduction | new introduce | new new-product | new new-service | new new-process | new new-solution | new product-lauch',
-    'Gender equality | Gender promoting balance inclusion | equality plans | equality measures | promoting equality | in equality | inclusive | equal opportunities | ensure women participation | equal opportunities for leadership | fostering equality | equal inclusion | equality between men and women | balanced and inclusive working environment',
-    'Gender formal equality policies | Gender balance is adequately promoted | Gender legislation and strategic plans on equality | Gender legislation and recommendations on equality | Gender anti discrimination strategy | Gender mainstreaming strategy | Gender institutional change projects | Gender equality measures | Gender equality training',
-    'Gender related strength and weakness | Gender differences between men and women | Gender does not take into account differences | Gender diversity perspective',
-    'Gender representation of women and men | Gender institutional change | Gender mainstream | Gender mainstreaming platform',
-    'Gender reshape the field | Gender promoting | Gender awareness-raising | Gender promote institutional change | Gender sensitive institutional transformation',
-    'Gender innovation | Gender participation of women | Gender increasing female expertise in the field | Gender sensitive research innovation | Gender diverse',
-    'Gender Participatory Audit | Gender Audit Facilitators | Gender impact assessment | Gender disaggregated statistics | Gender sensitive indicators | Gender gendering the content and methods of research | Gender sex-disaggregated data production | Gender evaluation',
-    'Gender committees | Gender advisor | Gender advice equality | Gender experstise | Gender sensitive parliament',
-    'Gender public allocations | Gender budgeting',
-    'Gender gap | Gender wage gap',
-    'Gender balance report | Gender composition | Gender share of female | Gander proportion of women | Gender parity indices | Gender balance monitoring | Gender underrepresentation of women | Gender monitoring instruments | Gender under-represented sex | Gender monitoring | Gender indicators | Gender ratios',
-    'Women empowerment of all girls | Women needs and the perspective',
-    'Gender related disputes | Gender based discriminations | Gender negative stereotypes | Gender disparities | Gender stereotypes | Gender issues | Gender implications | gender stereotypical roles | Gender equality related issues | Gender bias | Gender unconscious bias | Gender science stereotypes | Gender blind | Gender gender-based offenses | Gender segregated | Gender based mobbing and harassment | Gender sexist attitudes and bahaviours',
-    'Gender inclusive language | Gender grammatical | Gender inclusive communication | Gender biased expressions | Gender neutral words | Gender biased language | Gender traditional form of nouns | Gender neutral alternative for nouns | Gender non-discriminatory language | Gender feminine and masculine pronouns | Gender non-Sexist Language | Gender Sexist language',
-    'Gender sensitive | Gender friendly | Gender relevant',
-    'Gender research and curricula | Gender studies'
-    ]
-
-''' use only temporarly until AND operator is fixed'''
-temp_regex = all_regular_expressions[0:23] 
-main_regex = temp_regex + second_regex
-
-# broken websites
-broken_websites = ["http://www.intel.fr/", "http://wwwb.comcast.com/", "http://www.costco.com/", "http://www.catamaranrx.com/",
-                   "http://www.biogenidec.com/", "http://www.analog.com/", "http://www.akamai.com/", "http://www.altera.com/",
-                   "http://www.lgi.com/", "http://www.linear.com/", "http://www.adobe.com/", "http://www.sigmaaldrich.com/"]
-'''for website in broken_websites:
-    website_list.remove(website)
-'''
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
-}
-
+import xlrd
 
 ''' return all the content we need by looking at the tags in the html body '''
 def tag_visible(element):
@@ -108,8 +49,8 @@ def occurencePerWebsite(website, regex_list):
     data = []
     try:
         #print("\nWebsite scraped: ", website)
-        html_request = requests.get(website, headers=headers, timeout=10).text
-        #print("error: " + str(requests.get(website, headers=headers, timeout=10).raise_for_status()))
+        html_request = requests.get(website, headers=headers, timeout=5).text
+        #print("error: " + str(requests.get(website, headers=headers, timeout=5).raise_for_status()))
 
         #get all text from wepage (and lowercase it)
         all_html_text = text_from_html(html_request).lower()
@@ -151,12 +92,13 @@ def mainLoop(list, regex_list, file):
 
         data = [0] * len(regex_list)
         #print(data)
-        website_domain = re.findall('//(.*)/', website)[0]
+        website_domain = re.findall('//(.*)', website)[0]
+        print(website_domain)
 
         try:
             #print("error: " + str(requests.get(website).raise_for_status()))
             
-            html_request = requests.get(website, headers=headers, timeout=10).text
+            html_request = requests.get(website, headers=headers, timeout=5).text
 
             #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
@@ -279,17 +221,62 @@ def getDirectorsNames(website_list):
     return True
 
 
-
-
 ''' MAIN '''
 if __name__ == "__main__":
     print("\n-- STARTING THE PROGRAM --")
-    '''file = open('board_of_directors.csv', 'w', newline='')
-    writer = csv.writer(file)
-    getDirectorsNames(board_web_list)'''
-    file = open('results.csv', 'w', newline='')
-    writer = csv.writer(file)
-    mainLoop(website_list, main_regex, file)
-    
 
-    
+    ''' downloading the required NLTK dependencies '''
+    nltk.download('punkt')
+    nltk.download('averaged_perceptron_tagger')
+    nltk.download('maxent_ne_chunker')
+    nltk.download('words')
+
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
+    }
+
+    ''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
+    sheet_names=['NASDAQ-2021', 'INNOVATION-2021', 'FTSE-2021'] #  
+    for sheet in sheet_names:
+        workbook = pandas.read_excel('ALL_INDICES-2021.xlsx', sheet_name=sheet)
+        df = pandas.DataFrame(workbook)
+        website_list = df['Company website'].tolist()
+        board_web_list = df['Website Board of Directors'].tolist()
+        all_regular_expressions = df.columns[2:len(df.columns)-4].tolist()
+
+        ''' clear the regex given to something python can read'''
+        for i in range(0, len(all_regular_expressions)-1):
+            all_regular_expressions[i] = all_regular_expressions[i].replace("OR", "|")
+            all_regular_expressions[i] = all_regular_expressions[i].replace("+", " ")  # is plus a space in the expression??
+            all_regular_expressions[i] = all_regular_expressions[i].replace("AND", "+")
+            all_regular_expressions[i] = all_regular_expressions[i].replace("%22", "")
+
+        ''' second part of RE'''
+        second_regex = [
+            'new product | new service | new process | new application | new solution | new feature | new release | new version | new launch | new introduction | new introduce | new new-product | new new-service | new new-process | new new-solution | new product-lauch',
+            'Gender equality | Gender promoting balance inclusion | equality plans | equality measures | promoting equality | in equality | inclusive | equal opportunities | ensure women participation | equal opportunities for leadership | fostering equality | equal inclusion | equality between men and women | balanced and inclusive working environment',
+            'Gender formal equality policies | Gender balance is adequately promoted | Gender legislation and strategic plans on equality | Gender legislation and recommendations on equality | Gender anti discrimination strategy | Gender mainstreaming strategy | Gender institutional change projects | Gender equality measures | Gender equality training',
+            'Gender related strength and weakness | Gender differences between men and women | Gender does not take into account differences | Gender diversity perspective',
+            'Gender representation of women and men | Gender institutional change | Gender mainstream | Gender mainstreaming platform',
+            'Gender reshape the field | Gender promoting | Gender awareness-raising | Gender promote institutional change | Gender sensitive institutional transformation',
+            'Gender innovation | Gender participation of women | Gender increasing female expertise in the field | Gender sensitive research innovation | Gender diverse',
+            'Gender Participatory Audit | Gender Audit Facilitators | Gender impact assessment | Gender disaggregated statistics | Gender sensitive indicators | Gender gendering the content and methods of research | Gender sex-disaggregated data production | Gender evaluation',
+            'Gender committees | Gender advisor | Gender advice equality | Gender experstise | Gender sensitive parliament',
+            'Gender public allocations | Gender budgeting',
+            'Gender gap | Gender wage gap',
+            'Gender balance report | Gender composition | Gender share of female | Gander proportion of women | Gender parity indices | Gender balance monitoring | Gender underrepresentation of women | Gender monitoring instruments | Gender under-represented sex | Gender monitoring | Gender indicators | Gender ratios',
+            'Women empowerment of all girls | Women needs and the perspective',
+            'Gender related disputes | Gender based discriminations | Gender negative stereotypes | Gender disparities | Gender stereotypes | Gender issues | Gender implications | gender stereotypical roles | Gender equality related issues | Gender bias | Gender unconscious bias | Gender science stereotypes | Gender blind | Gender gender-based offenses | Gender segregated | Gender based mobbing and harassment | Gender sexist attitudes and bahaviours',
+            'Gender inclusive language | Gender grammatical | Gender inclusive communication | Gender biased expressions | Gender neutral words | Gender biased language | Gender traditional form of nouns | Gender neutral alternative for nouns | Gender non-discriminatory language | Gender feminine and masculine pronouns | Gender non-Sexist Language | Gender Sexist language',
+            'Gender sensitive | Gender friendly | Gender relevant',
+            'Gender research and curricula | Gender studies'
+            ]
+        temp_regex = all_regular_expressions[0:23] 
+        main_regex = temp_regex + second_regex
+
+        file = open('board_of_directors.csv', 'w', newline='')
+        writer = csv.writer(file)
+        getDirectorsNames(board_web_list)
+        file = open('results.csv', 'w', newline='')
+        writer = csv.writer(file)
+        mainLoop(website_list, main_regex, file)
