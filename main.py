@@ -234,23 +234,26 @@ if __name__ == "__main__":
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36"
     }
+    
+    board_file = open('board_of_directors.csv', 'w', newline='')
+    regex_file = open('results.csv', 'w', newline='')
 
     ''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
-    sheet_names=['NASDAQ-2021', 'INNOVATION-2021', 'FTSE-2021'] #  
+    sheet_names=['FRANCE'] #'NASDAQ-2021','INNOVATION-2021' , 'FTSE-2021', 'GERMANY', ]   
     for sheet in sheet_names:
-        workbook = pandas.read_excel('ALL_INDICES-2021.xlsx', sheet_name=sheet)
+        workbook = pandas.read_excel('board_of_dir_REALVALUES_copy.xlsx', sheet_name=sheet)     #change to ALL_INDICES-2021.xlsx when scraping with regex
         df = pandas.DataFrame(workbook)
-        website_list = df['Company website'].tolist()
-        board_web_list = df['Website Board of Directors'].tolist()
-        all_regular_expressions = df.columns[2:len(df.columns)-4].tolist()
+        #website_list = df['Company website'].tolist()
 
+        board_web_list = df['Website Board of Directors'].tolist()
+
+        all_regular_expressions = df.columns[2:len(df.columns)-4].tolist()
         ''' clear the regex given to something python can read'''
         for i in range(0, len(all_regular_expressions)-1):
             all_regular_expressions[i] = all_regular_expressions[i].replace("OR", "|")
             all_regular_expressions[i] = all_regular_expressions[i].replace("+", " ")  # is plus a space in the expression??
             all_regular_expressions[i] = all_regular_expressions[i].replace("AND", "+")
             all_regular_expressions[i] = all_regular_expressions[i].replace("%22", "")
-
         ''' second part of RE'''
         second_regex = [
             'new product | new service | new process | new application | new solution | new feature | new release | new version | new launch | new introduction | new introduce | new new-product | new new-service | new new-process | new new-solution | new product-lauch',
@@ -274,9 +277,9 @@ if __name__ == "__main__":
         temp_regex = all_regular_expressions[0:23] 
         main_regex = temp_regex + second_regex
 
-        file = open('board_of_directors.csv', 'w', newline='')
-        writer = csv.writer(file)
+        
+        writer = csv.writer(board_file)
         getDirectorsNames(board_web_list)
-        file = open('results.csv', 'w', newline='')
-        writer = csv.writer(file)
-        mainLoop(website_list, main_regex, file)
+        '''
+        writer = csv.writer(regex_file)
+        mainLoop(website_list, main_regex, file)'''
