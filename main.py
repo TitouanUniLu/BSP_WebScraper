@@ -239,7 +239,7 @@ if __name__ == "__main__":
     regex_file = open('results.csv', 'w', newline='')
 
     ''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
-    sheet_names=['FRANCE'] #'NASDAQ-2021','INNOVATION-2021' , 'FTSE-2021', 'GERMANY', ]   
+    sheet_names=['NASDAQ-2021','INNOVATION-2021' , 'FTSE-2021', 'GERMANY', 'FRANCE']   
     for sheet in sheet_names:
         workbook = pandas.read_excel('board_of_dir_REALVALUES_copy.xlsx', sheet_name=sheet)     #change to ALL_INDICES-2021.xlsx when scraping with regex
         df = pandas.DataFrame(workbook)
