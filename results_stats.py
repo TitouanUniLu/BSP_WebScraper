@@ -3,7 +3,7 @@ import pandas
 #statsFile = open('')
 sheet_names=['NASDAQ-2021','INNOVATION-2021' , 'FTSE-2021', 'GERMANY', 'FRANCE']  
 for sheet in sheet_names:
-    workbook = pandas.read_excel('ALL_BoD_SCRAPED_RESULTS.xlsx', sheet_name=sheet)     #change to ALL_INDICES-2021.xlsx when scraping with regex
+    workbook = pandas.read_excel('ALL_BoD_SCRAPED_RESULTS - Copy.xlsx', sheet_name=sheet)     #change to ALL_INDICES-2021.xlsx when scraping with regex
     df = pandas.DataFrame(workbook)
     male_scraped = df['male']
     female_scraped = df['female']
