@@ -10,7 +10,6 @@ from nltk import ne_chunk, pos_tag, word_tokenize
 from nltk.tree import Tree
 from names_dataset import NameDataset, NameWrapper
 import gender_guesser.detector as gender
-import xlrd
 
 ''' return all the content we need by looking at the tags in the html body '''
 def tag_visible(element):
@@ -176,40 +175,11 @@ def getDirectorsNames(website_list):
                 person = []
             #print(website, person_list, '\n\n')
             final_names = []
-            '''for name in person_list:
-                try:
-                    name = name.split()
-                    first = (NameWrapper(nd.search(name[0])).describe)
-                    #last = (NameWrapper(nd.search(name[1])).describe, '\n')
-                    if first.split(',')[0] == 'Male' or first.split(',')[0] == 'Female':
-                        #print(name)
-                        #print(first, last, '\n')
-                        newname = name[0] + ' ' + name[1]
-                        if newname not in final_names: final_names.append(newname)
-                        #time.sleep(2)
-                    elif name[0].lower() == 'ms.' or name[0].lower() == 'mr.':
-                        newname = name[0] + ' ' + name[1]
-                        if newname not in final_names: final_names.append(newname) '''
-
-                    #new method
+                    
+                 
             for fullname in person_list:
-                try:
-                    name = fullname.split()
-                    first = (NameWrapper(nd.search(name[0])).describe)
-                    #last = (NameWrapper(nd.search(name[1])).describe, '\n')
-                    if first.split(',')[0] == 'Male' or first.split(',')[0] == 'Female':
-                        #print(name)
-                        #print(first, last, '\n')
-                        #newname = name[0] + ' ' + name[1]
-                        if fullname not in final_names: final_names.append(fullname)
-                        #time.sleep(2)
-                    elif name[0].lower() == 'ms.' or name[0].lower() == 'mr.':
-                        #fullname = name[0] + ' ' + name[1]
-                        if fullname not in final_names: final_names.append(fullname) 
-                               
-
-                except Exception as e:
-                    continue
+                if fullname not in final_names: final_names.append(fullname)
+            
             final_names, gender_stats = directorGender(final_names)
             data = [website] + gender_stats #add final_names here to see directors names
             print(website, final_names, '\n')
