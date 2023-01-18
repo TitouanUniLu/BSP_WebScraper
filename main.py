@@ -24,9 +24,7 @@ def tag_visible(element):
 def text_from_html(body):
     soup = BeautifulSoup(body, 'lxml')
     texts = soup.findAll(text=True)
-    # second function call, to check if text is visible
     visible_texts = filter(tag_visible, texts)
-    # .strip() removes extra spaces
     return u" ".join(t.strip() for t in visible_texts)
 
 
@@ -34,7 +32,7 @@ def text_from_html(body):
 def get_sub_links(html_request, website):
     soup = BeautifulSoup(html_request, 'lxml')
     all_sub_links = []
-    CAP = 100000    #variable to avoid having too many website, change value if needed
+    CAP = 500    #variable to avoid having too many website, change value if needed
     
     for link in soup.find_all('a', attrs={'href': re.compile("^https://")}):
         link = link.get('href')
@@ -47,18 +45,14 @@ def get_sub_links(html_request, website):
 def occurencePerWebsite(website, regex_list):
     data = []
     try:
-        #print("\nWebsite scraped: ", website)
         html_request = requests.get(website, headers=headers, timeout=5).text
-        #print("error: " + str(requests.get(website, headers=headers, timeout=5).raise_for_status()))
 
-        #get all text from wepage (and lowercase it)
         all_html_text = text_from_html(html_request).lower()
 
         #find all occurences of word usign RE
         for i in range(0,len(regex_list)):
             matches = re.findall(re.compile(regex_list[i]), all_html_text)
             #print(regex, len(matches))         #debug line
-            #for elem in matches: print(elem)
             data.append(len(matches))
         return data
                   
@@ -74,61 +68,39 @@ def sumResults(fullData, subData):
 
 ''' MAIN LOOP TO RUN TO OBTAIN RESULTS '''
 def mainLoop(list, regex_list, file):
-
-    #black_list = ['https://www.ebay.com/feed', 'https://www.ebay.com/myb/SavedSellers', 'https://www.ebay.com/myb/SavedSearches',
-    #'https://www.microchip.com/en-us/products/embedded-controllers-and-super-io']
-
-
     header = ["Website Name", "Amount of Sub-Websites"]
     for elem in regex_list:
         header.append(elem.lower())
     writer.writerow(header)
-
     start_time = time.time()
     for website in list:
         print("Main website scraped: ", website)
-        #print(str(requests.get(website).raise_for_status()))
 
         data = [0] * len(regex_list)
-        #print(data)
         website_domain = re.findall('//(.*)', website)[0]
         print(website_domain)
-
-        try:
-            #print("error: " + str(requests.get(website).raise_for_status()))
-            
+        try:           
             html_request = requests.get(website, headers=headers, timeout=5).text
 
-            #find all sub links hidden or visible in the website
             all_websites = get_sub_links(html_request, website_domain)
             print(len(all_websites))
 
-            '''for elem in black_list: 
-                if elem in all_websites: all_websites.remove(elem)'''
-
-            #print("The amount of sub-websites that will be scraped is: ", len(all_websites))
             print("amount of websites that will be scraped in same domain:  ", len(all_websites))
             for sub_website in all_websites:
-                #data.append(sub_website)
-                #print(sub_website)
+
                 tempData = occurencePerWebsite(sub_website, regex_list)
                 data = sumResults(data, tempData)
-                #print(data)
             data = [website] + [len(all_websites)] + data
             print('\n', data)
             writer.writerow(data)
         
         except Exception as e:
             print("error: ", e) 
-            '''for i in range(0, len(header)-1):
-                data.append("error")'''
             data = [website] + [len(all_websites)] + data
-            #data.append("error")
             writer.writerow(data)
 
-
         print("Time elapsed:", round(time.time()-start_time, 0), 'secs \n \n')
-        # os.system('cls')
+
 
 def directorGender(list):
     d = gender.Detector()
@@ -173,10 +145,8 @@ def getDirectorsNames(website_list):
                         person_list.append(name[:-1])
                     name = ''
                 person = []
-            #print(website, person_list, '\n\n')
             final_names = []
                     
-                 
             for fullname in person_list:
                 if fullname not in final_names: final_names.append(fullname)
             
@@ -209,15 +179,15 @@ if __name__ == "__main__":
     regex_file = open('results.csv', 'w', newline='')
 
     ''' CREATING A LIST OF ALL WEBSITE FROM THE XLSX FILE '''
-    sheet_names=['NASDAQ-2021','INNOVATION-2021' , 'FTSE-2021', 'GERMANY', 'FRANCE']   
+    sheet_names=['FRANCE']   #'NASDAQ-2021', 'INNOVATION-2021', 'FTSE-2021', 'GERMANY', , 'HOSPITALITY'
     for sheet in sheet_names:
-        workbook = pandas.read_excel('board_of_dir_REALVALUES_copy.xlsx', sheet_name=sheet)     #change to ALL_INDICES-2021.xlsx when scraping with regex
+        workbook = pandas.read_excel('ALL_INDICES-2021.xlsx', sheet_name=sheet)     #or board_of_dir_REALVALUES.xlsx 
         df = pandas.DataFrame(workbook)
-        #website_list = df['Company website'].tolist()
 
-        board_web_list = df['Website Board of Directors'].tolist()
+        #board_web_list = df['Website Board of Directors'].tolist()
+        website_list = df['Company website'].tolist()
 
-        all_regular_expressions = df.columns[2:len(df.columns)-4].tolist()
+        all_regular_expressions = df.columns[4:len(df.columns)-4].tolist() #change if needed
         ''' clear the regex given to something python can read'''
         for i in range(0, len(all_regular_expressions)-1):
             all_regular_expressions[i] = all_regular_expressions[i].replace("OR", "|")
@@ -247,9 +217,10 @@ if __name__ == "__main__":
         temp_regex = all_regular_expressions[0:23] 
         main_regex = temp_regex + second_regex
 
-        
+        '''
         writer = csv.writer(board_file)
         getDirectorsNames(board_web_list)
         '''
+        
         writer = csv.writer(regex_file)
-        mainLoop(website_list, main_regex, file)'''
+        mainLoop(website_list, main_regex, regex_file)
